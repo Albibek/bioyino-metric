@@ -506,9 +506,36 @@ where
         self.timestamp
     }
 
-    pub fn sort_timer(&mut self) {
+    pub fn filter_timer(mut self) -> Self {
         if let MetricValue::Timer(ref mut agg) = self.value {
-            agg.sort_unstable_by(|ref v1, ref v2| v1.partial_cmp(v2).unwrap());
+            if agg.iter().any(|f| !Float::is_finite(*f)) {
+
+                let agg_filtered = agg.into_iter().filter_map(|f| {
+                    if f.is_finite() { Some(f.clone()) } else {None}
+                }).collect::<Vec<_>>();
+
+                Self {
+                    value: MetricValue::Timer(agg_filtered),
+                    ..self
+                }
+            } else {
+                self
+            }
+        } else {
+            self
+        }
+    }
+
+    pub fn sort_timer(&mut self, name: &MetricName) {
+        if let MetricValue::Timer(ref mut agg) = self.value {
+            agg.sort_unstable_by(|ref v1, ref v2| {
+                match v1.partial_cmp(v2) {
+                    None => {
+                        panic!("detected uncomparable items in metric {}", name.to_string());
+                    },
+                    Some(r) => r,
+                }
+            });
         }
     }
 

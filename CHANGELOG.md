@@ -1,3 +1,6 @@
+# 0.5.1
+* implemented filtering NaNs out of Timer metrics
+
 # 0.5.0
 * added CustomHistogram type, allowing to parse and aggregate histogram with statically defined number of buckets and dynamic range, i.e. `some.metric:1|H1.2,1.8`
 * removed DiffCounter metric type due to being broken and counter intuitive

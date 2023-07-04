@@ -7,6 +7,7 @@ use std::str::FromStr;
 use num_traits::{AsPrimitive, Float};
 use serde::{Deserialize, Serialize};
 
+use crate::MetricName;
 use crate::metric::{FromF64, Metric, MetricTypeName, MetricValue};
 
 /// Percentile counter. Not safe against all edge cases:
@@ -291,7 +292,10 @@ where
             (_, &Aggregate::UpdateCount) => Some(metric.updates()),
             (_, &Aggregate::Rate(Some(secs))) => Some(metric.updates() / secs / metric.sampling()),
             _ => None,
-        }
+        }.and_then(|value| {
+            // filter away NaNs and infinities
+            if value.is_finite() { Some(value) } else { None }
+        })
     }
 }
 
@@ -313,7 +317,7 @@ impl<'a, F> AggregateCalculator<'a, F>
 where
     F: Float + Debug + FromF64 + AsPrimitive<f64> + AsPrimitive<usize>,
 {
-    pub fn new(metric: &'a mut Metric<F>, aggregates: &'a [Aggregate<F>]) -> Self {
+    pub fn new(metric: &'a mut Metric<F>, aggregates: &'a [Aggregate<F>], name: &MetricName) -> Self {
         let timer_last = if let MetricValue::Timer(ref agg) = metric.value() {
             if let Some(last) = agg.last() {
                 Some(*last)
@@ -331,7 +335,7 @@ where
             None
         };
 
-        metric.sort_timer();
+        metric.sort_timer(name);
         Self {
             metric,
             timer_sum,

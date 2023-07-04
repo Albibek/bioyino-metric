@@ -1,6 +1,6 @@
 [package]
 name = "bioyino-metric"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Sergey Noskov aka Albibek <albibek@gmail.com>"]
 description = "Library for handling metrics in bioyino and related projects"
 edition = "2018"
